@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Socket.IO Chat - Ultra Neon Border</title>
+    <style>
+        :root {
+            --body-bg: #0f0f0f;
+            --chat-bg: #121212;
+            --input-bg: #1f1f1f;
+            --primary-color: #00ffae;
+            --primary-hover-color: #00d0ff;
+            --text-color: #fff;
+            --secondary-text-color: #222222;
+            --text-hover-color:#ffffff;
+            --border-glow-color: #00f0ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            background: var(--body-bg);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #chat-container {
+            width: 95%;
+            /*max-width: 600px;*/
+            height: 90vh;
+            background: var(--chat-bg);
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            padding: 0.5rem;
+            /* Here is the REAL Neon Border */
+            border: 4px solid var(--border-glow-color);
+            /*box-shadow: 0 0 12px var(--border-glow-color),
+                0 0 24px var(--border-glow-color),
+                0 0 36px var(--border-glow-color);*/
+            animation: neonBorder 5s linear infinite;
+        }
+
+        /* Animate the neon border glow */
+        /*@keyframes neonBorder {
+            0% {
+                box-shadow: 0 0 8px var(--border-glow-color),
+                    0 0 16px var(--border-glow-color),
+                    0 0 24px var(--border-glow-color);
+            }
+
+            50% {
+                box-shadow: 0 0 16px var(--border-glow-color),
+                    0 0 32px var(--border-glow-color),
+                    0 0 48px var(--border-glow-color);
+            }
+
+            100% {
+                box-shadow: 0 0 8px var(--border-glow-color),
+                    0 0 16px var(--border-glow-color),
+                    0 0 24px var(--border-glow-color);
+            }
+        }*/
+
+        #messages {
+            list-style: none;
+            padding-bottom: 5rem;
+            flex-grow: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #messages>li {
+            background: rgba(0, 255, 255, 0.1);
+
+            margin: 0.5rem 0;
+            /*margin-bottom: 20px;*/
+            padding: 0.8rem 1.2rem;
+            border-radius: 1rem;
+            max-width: 70%;
+            word-wrap: break-word;
+            box-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+            animation: fadeInMessage 0.4s ease;
+        }
+
+        #messages>li:nth-child(even) {
+            background: rgba(0, 255, 255, 0.2);
+            margin-left: auto;
+        }
+
+        @keyframes fadeInMessage {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #form {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-top: 1px solid #333;
+        }
+
+        #input {
+            flex-grow: 1;
+            background: var(--input-bg);
+            border: none;
+            border-radius: 2rem;
+            padding: 0.8rem 1.2rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        #input:focus {
+            background: #292929;
+        }
+
+        #form>button {
+            background: var(--primary-color);
+            border: none;
+            color: var(--secondary-text-color);
+            padding: 0.8rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #form>button:hover {
+            color: white;
+            background: var(--primary-hover-color);
+            box-shadow: 0 0 8px var(--primary-hover-color),
+                0 0 16px var(--primary-hover-color);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chat-container">
+        <ul id="messages">
+            <li>⚡ This is a real neon border!</li>
+            <li>💬 Feel that glow effect?</li>
+            <li>🔥 Animated breathing border!</li>
+            <li>🚀 Still clean and responsive!</li>
+        </ul>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" placeholder="Type a message..." />
+            <button>Send</button>
+            <button id="toggle-btn">Disconnect</button>
+        </form>
+    </div>
+
+
+
+
+
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        //added
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
+
+        const toggleButton = document.getElementById('toggle-btn');
+
+        toggleButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (socket.connected) {
+            toggleButton.innerText = 'Connect';
+            socket.disconnect();
+          } else {
+            toggleButton.innerText = 'Disconnect';
+            socket.connect();
+          }
+        });
+
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (msg) => {
+            const item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+            window.scrollTo(10, document.body.scrollHeight);
+        });
+
+
+
+    </script>
+
+</body>
+
+</html>
