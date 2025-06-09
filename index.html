@@ -13,7 +13,7 @@
             --primary-hover-color: #00d0ff;
             --text-color: #fff;
             --secondary-text-color: #222222;
-            --text-hover-color:#ffffff;
+            --text-hover-color: #ffffff;
             --border-glow-color: #00f0ff;
         }
 
@@ -190,7 +190,17 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+
+        let counter = 0;
+
+        const socket = io({
+            auth: {
+                serverOffset: 0
+            },
+            // enable retries
+            ackTimeout: 10000,
+            retries: 3,
+        });
 
         //added
         const form = document.getElementById('form');
@@ -200,30 +210,33 @@
         const toggleButton = document.getElementById('toggle-btn');
 
         toggleButton.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (socket.connected) {
-            toggleButton.innerText = 'Connect';
-            socket.disconnect();
-          } else {
-            toggleButton.innerText = 'Disconnect';
-            socket.connect();
-          }
+            e.preventDefault();
+            if (socket.connected) {
+                toggleButton.innerText = 'Connect';
+                socket.disconnect();
+            } else {
+                toggleButton.innerText = 'Disconnect';
+                socket.connect();
+            }
         });
 
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             if (input.value) {
-                socket.emit('chat message', input.value);
+                // compute a unique offset
+                const clientOffset = `${socket.id}-${counter++}`;
+                socket.emit('chat message', input.value, clientOffset);
                 input.value = '';
             }
         });
 
-        socket.on('chat message', (msg) => {
+        socket.on('chat message', (msg, serverOffset) => {
             const item = document.createElement('li');
             item.textContent = msg;
             messages.appendChild(item);
-            window.scrollTo(10, document.body.scrollHeight);
+            window.scrollTo(0, document.body.scrollHeight);
+            socket.auth.serverOffset = serverOffset;
         });
 
 
